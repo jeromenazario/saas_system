@@ -2,6 +2,7 @@
 session_start();
 if (!isset($_SESSION['user_id'])) { header('Location: ../login.php'); exit; }
 require '../config/db.php';
+require '../config/log_activity.php';
 
 $client_id = intval($_GET['client_id'] ?? 0);
 if (!$client_id) { header('Location: ../index.php'); exit; }
@@ -25,6 +26,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     } else {
         $stmt = $pdo->prepare("INSERT INTO subscriptions (client_id, plan_name, price, status, start_date, end_date, added_by, updated_by) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
         $stmt->execute([$client_id, $plan_name, $price, $status, $start_date ?: null, $end_date ?: null, $_SESSION['user_id'], $_SESSION['user_id']]);
+        $new_id = $pdo->lastInsertId();
+
+        // Log the activity
+        log_activity(
+            $pdo,
+            $_SESSION['user_id'],
+            $_SESSION['user_name'],
+            'CREATE',
+            'subscription',
+            $new_id,
+            "Added subscription \"{$plan_name}\" (\${$price}/mo, {$status}) for client \"{$client['client_name']}\""
+        );
+
         header("Location: ../clients/view.php?id={$client_id}&msg=Subscription+added!");
         exit;
     }

@@ -44,6 +44,9 @@ $clients = $stmt->fetchAll();
 <nav class="navbar navbar-dark navbar-expand-lg px-4">
   <a class="navbar-brand" href="index.php">⚡ SaaS Manager</a>
   <div class="ms-auto d-flex align-items-center gap-3">
+    <a href="search.php" class="btn btn-outline-light btn-sm"><i class="bi bi-search me-1"></i>Search</a>
+    <a href="activity_logs.php" class="btn btn-outline-light btn-sm"><i class="bi bi-journal-text me-1"></i>Activity Logs</a>
+    <a href="who_did_it.php" class="btn btn-outline-light btn-sm"><i class="bi bi-person-check me-1"></i>Who Did It</a>
     <span class="text-white opacity-75 small"><i class="bi bi-person-circle me-1"></i><?= htmlspecialchars($_SESSION['user_name']) ?></span>
     <a href="logout.php" class="btn btn-outline-light btn-sm"><i class="bi bi-box-arrow-right me-1"></i>Logout</a>
   </div>

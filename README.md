@@ -1,78 +1,6 @@
 # ⚡ SaaS Client & Subscription Manager
 
-A PHP/MySQL web application for managing SaaS clients and their subscriptions, built with user authentication and activity tracking.
-
-## Features
-
-- **User Registration & Login** — secure authentication with hashed passwords
-- **Session Protection** — all pages redirect to login if the user is not authenticated
-- **Client Management** — add, edit, and delete clients
-- **Subscription Management** — manage subscriptions per client (plans, pricing, status)
-- **Activity Tracking** — every record shows who added it and who last updated it (`added_by`, `last_updated`)
-- **Responsive UI** — styled with Bootstrap 5
-
-## Tech Stack
-
-- PHP
-- MySQL
-- Bootstrap 5
-- XAMPP (local development)
-
-## Database Structure
-
-| Table           | Description                                        |
-| --------------- | -------------------------------------------------- |
-| `users`         | Stores registered user accounts                    |
-| `clients`       | Stores client records (one side of 1:M)            |
-| `subscriptions` | Stores subscriptions per client (many side of 1:M) |
-
-## Setup Instructions
-
-1. Clone or download this repository
-2. Copy the `saas_system` folder into your XAMPP `htdocs` directory
-3. Start **Apache** and **MySQL** in XAMPP
-4. Open `http://localhost/phpmyadmin`
-5. Run the `database.sql` file — paste it into the Console and press **Ctrl+Enter**
-6. Open `http://localhost/saas_system/` in your browser
-
-## Usage
-
-1. Register a new account at `/register.php`
-2. Log in at `/login.php`
-3. Add clients from the homepage
-4. Click the eye icon on a client to manage their subscriptions
-5. All records display who created/updated them and when
-6. Click **Logout** when done
-
-## Project Structure
-
-```
-saas_system/
-├── config/
-│   └── db.php              # Database connection
-├── clients/
-│   ├── add.php             # Add a client
-│   ├── edit.php            # Edit a client
-│   ├── delete.php          # Delete a client
-│   └── view.php            # View client's subscriptions
-├── subscriptions/
-│   ├── add.php             # Add a subscription
-│   ├── edit.php            # Edit a subscription
-│   └── delete.php          # Delete a subscription
-├── index.php               # Homepage (protected)
-├── login.php               # Login page
-├── register.php            # Registration page
-├── logout.php              # Logout handler
-└── database.sql            # Database schema
-```
-
-## Author
-
-Jerome Nazario
-
-# ⚡ SaaS Client & Subscription Manager
-
-A PHP/MySQL web application for managing SaaS clients and their subscriptions, built with user authentication, activity tracking, and XSS security protection.
+A PHP/MySQL web application for managing SaaS clients and their subscriptions, built with user authentication, XSS security protection, and a full activity logging system.
 
 ---
 
@@ -85,7 +13,6 @@ A PHP/MySQL web application for managing SaaS clients and their subscriptions, b
 - **Client Management** — add, edit, and delete clients
 - **Subscription Management** — manage subscriptions per client (plans, pricing, status)
 - **Activity Tracking** — every record shows who added it and who last updated it (`added_by`, `updated_by`)
-- **Who Did It Page** — dedicated audit log showing all user activity across the system
 - **Responsive UI** — styled with Bootstrap 5
 
 ### Tech Stack
@@ -107,9 +34,9 @@ A PHP/MySQL web application for managing SaaS clients and their subscriptions, b
 
 1. Clone or download this repository
 2. Copy the `saas_system` folder into your XAMPP `htdocs` directory
-3. Start Apache and MySQL in XAMPP
+3. Start **Apache** and **MySQL** in XAMPP
 4. Open `http://localhost/phpmyadmin`
-5. Run the `database.sql` file — paste it into the Console and press `Ctrl+Enter`
+5. Run `database.sql` — paste it into the SQL tab and press **Go**
 6. Open `http://localhost/saas_system/` in your browser
 
 ### Usage
@@ -118,8 +45,7 @@ A PHP/MySQL web application for managing SaaS clients and their subscriptions, b
 - Log in at `/login.php`
 - Add clients from the homepage
 - Click the eye icon on a client to manage their subscriptions
-- View the full activity log at `/who_did_it.php`
-- Click Logout when done
+- Click **Logout** when done
 
 ---
 
@@ -132,19 +58,48 @@ A PHP/MySQL web application for managing SaaS clients and their subscriptions, b
 - **HttpOnly + SameSite Cookies** — session cookie cannot be accessed by JavaScript, protecting against cookie theft attacks
 - **Session Fixation Protection** — `session_regenerate_id()` is called after every successful login
 - **Stronger Password Rules** — passwords now require a minimum of 8 characters with at least one uppercase letter, one lowercase letter, and one number
-- **XSS Demo Page** — `xss_vulnerable_demo.php` demonstrates a cookie theft attack and the fix side by side
+- **XSS Demo Page** — `xss_vulnerable_demo.php` demonstrates a cookie theft attack and the fix
 
 ### Security Techniques Used
 
-| Technique                                              | Where Applied                                 |
-| ------------------------------------------------------ | --------------------------------------------- |
-| `sanitize_input()` with `htmlspecialchars()`           | `login.php`, `register.php`                   |
-| Output encoding on all echoed values                   | All PHP pages                                 |
-| `Content-Security-Policy` header                       | `login.php`, `register.php`, `who_did_it.php` |
-| `HttpOnly` + `SameSite=Strict` cookies                 | `login.php`, `register.php`                   |
-| `session_regenerate_id(true)`                          | `login.php` (after login)                     |
-| `validate_password()` — 8+ chars, upper, lower, number | `register.php`                                |
-| `password_hash()` / `password_verify()`                | `register.php` / `login.php`                  |
+| Technique                                              | Where Applied                |
+| ------------------------------------------------------ | ---------------------------- |
+| `sanitize_input()` with `htmlspecialchars()`           | `login.php`, `register.php`  |
+| Output encoding on all echoed values                   | All PHP pages                |
+| `Content-Security-Policy` header                       | `login.php`, `register.php`  |
+| `HttpOnly` + `SameSite=Strict` cookies                 | `login.php`, `register.php`  |
+| `session_regenerate_id(true)`                          | `login.php` (after login)    |
+| `validate_password()` — 8+ chars, upper, lower, number | `register.php`               |
+| `password_hash()` / `password_verify()`                | `register.php` / `login.php` |
+
+---
+
+## Final Exam – Activity Logs & Search
+
+### What Was Added
+
+- **Activity Logs** — every CREATE, UPDATE, and DELETE action on clients and subscriptions is recorded in the `activity_logs` table with the user's name, timestamp, and a description of what changed
+- **Search Page** — search across both clients and subscriptions simultaneously using keyword matching
+- **Who Did It Page** — audit trail showing which user added or last updated each client record
+- **Shared Log Helper** — `config/log_activity.php` contains a reusable `log_activity()` function used across all 6 CRUD files
+
+### One-to-Many Relationship
+
+**Clients → Subscriptions** (one client can have many subscriptions)
+
+- Parent: `clients` table
+- Child: `subscriptions` table, linked via `client_id` foreign key
+
+### Database Structure (updated)
+
+| Table           | Description                                        |
+| --------------- | -------------------------------------------------- |
+| `users`         | Stores registered user accounts                    |
+| `clients`       | Stores client records (one side of 1:M)            |
+| `subscriptions` | Stores subscriptions per client (many side of 1:M) |
+| `activity_logs` | Audit log of every CRUD action by every user       |
+
+> Run `activity_log.sql` in phpMyAdmin after running `database.sql` to create the `activity_logs` table.
 
 ---
 
@@ -153,7 +108,8 @@ A PHP/MySQL web application for managing SaaS clients and their subscriptions, b
 ```
 saas_system/
 ├── config/
-│   └── db.php                  # Database connection
+│   ├── db.php                  # Database connection
+│   └── log_activity.php        # Shared activity logging helper (Final Exam)
 ├── clients/
 │   ├── add.php                 # Add a client
 │   ├── edit.php                # Edit a client
@@ -167,9 +123,12 @@ saas_system/
 ├── login.php                   # Login page (Act 2: XSS protection + secure cookies)
 ├── register.php                # Registration page (Act 2: password rules + XSS protection)
 ├── logout.php                  # Logout handler (Act 2: proper session destruction)
-├── who_did_it.php              # Audit log — who added/updated what (Act 1 + Act 2)
+├── search.php                  # Search clients & subscriptions (Final Exam)
+├── activity_logs.php           # Read-only activity log viewer (Final Exam)
+├── who_did_it.php              # Per-client audit trail (Final Exam)
 ├── xss_vulnerable_demo.php     # XSS attack demo page (Act 2)
-└── database.sql                # Database schema
+├── database.sql                # Main database schema
+└── activity_log.sql            # Creates activity_logs table (Final Exam)
 ```
 
 ---

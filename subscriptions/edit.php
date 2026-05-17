@@ -2,11 +2,12 @@
 session_start();
 if (!isset($_SESSION['user_id'])) { header('Location: ../login.php'); exit; }
 require '../config/db.php';
+require '../config/log_activity.php';
 
 $id        = intval($_GET['id'] ?? 0);
 $client_id = intval($_GET['client_id'] ?? 0);
 
-$stmt = $pdo->prepare("SELECT * FROM subscriptions WHERE id=?");
+$stmt = $pdo->prepare("SELECT s.*, c.client_name FROM subscriptions s JOIN clients c ON c.id = s.client_id WHERE s.id=?");
 $stmt->execute([$id]);
 $sub = $stmt->fetch();
 if (!$sub) { header('Location: ../index.php'); exit; }
@@ -25,6 +26,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     } else {
         $stmt = $pdo->prepare("UPDATE subscriptions SET plan_name=?, price=?, status=?, start_date=?, end_date=?, updated_by=?, last_updated=NOW() WHERE id=?");
         $stmt->execute([$plan_name, $price, $status, $start_date ?: null, $end_date ?: null, $_SESSION['user_id'], $id]);
+
+        // Log the activity — show old plan name → new plan name
+        log_activity(
+            $pdo,
+            $_SESSION['user_id'],
+            $_SESSION['user_name'],
+            'UPDATE',
+            'subscription',
+            $id,
+            "Updated subscription \"{$sub['plan_name']}\" → \"{$plan_name}\" (\${$price}/mo, {$status}) for client \"{$sub['client_name']}\""
+        );
+
         header("Location: ../clients/view.php?id={$client_id}&msg=Subscription+updated!");
         exit;
     }

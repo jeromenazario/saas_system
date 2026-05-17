@@ -2,6 +2,7 @@
 session_start();
 if (!isset($_SESSION['user_id'])) { header('Location: ../login.php'); exit; }
 require '../config/db.php';
+require '../config/log_activity.php';
 
 $error = '';
 
@@ -17,6 +18,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     } else {
         $stmt = $pdo->prepare("INSERT INTO clients (client_name, email, phone, company, industry, added_by, updated_by) VALUES (?, ?, ?, ?, ?, ?, ?)");
         $stmt->execute([$client_name, $email, $phone, $company, $industry, $_SESSION['user_id'], $_SESSION['user_id']]);
+        $new_id = $pdo->lastInsertId();
+
+        // Log the activity
+        log_activity(
+            $pdo,
+            $_SESSION['user_id'],
+            $_SESSION['user_name'],
+            'CREATE',
+            'client',
+            $new_id,
+            "Added new client: \"{$client_name}\" (Company: {$company})"
+        );
+
         header('Location: ../index.php?msg=Client+added+successfully!');
         exit;
     }

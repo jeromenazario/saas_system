@@ -2,6 +2,7 @@
 session_start();
 if (!isset($_SESSION['user_id'])) { header('Location: ../login.php'); exit; }
 require '../config/db.php';
+require '../config/log_activity.php';
 
 $id = intval($_GET['id'] ?? 0);
 $stmt = $pdo->prepare("SELECT * FROM clients WHERE id = ?");
@@ -23,6 +24,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     } else {
         $stmt = $pdo->prepare("UPDATE clients SET client_name=?, email=?, phone=?, company=?, industry=?, updated_by=?, last_updated=NOW() WHERE id=?");
         $stmt->execute([$client_name, $email, $phone, $company, $industry, $_SESSION['user_id'], $id]);
+
+        // Log the activity — include old and new name for clarity
+        log_activity(
+            $pdo,
+            $_SESSION['user_id'],
+            $_SESSION['user_name'],
+            'UPDATE',
+            'client',
+            $id,
+            "Updated client: \"{$client['client_name']}\" → \"{$client_name}\" (Company: {$company})"
+        );
+
         header('Location: ../index.php?msg=Client+updated+successfully!');
         exit;
     }
